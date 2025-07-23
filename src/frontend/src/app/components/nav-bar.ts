@@ -1,6 +1,14 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+} from '@angular/core';
 import { RoutedLink } from './routed-link';
 import { RouterLink } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { IdentityActions } from '../../shared/identity/actions';
+import { selectIsLoggedIn } from '../../shared/identity/store';
 
 @Component({
   selector: 'app-nav-bar',
@@ -44,12 +52,29 @@ import { RouterLink } from '@angular/router';
       </ul>
     </div>
     <div class="navbar-end">
-      <a class="btn">Button</a>
+      <!-- only show login button if i'm not logged in -->
+      @if (sub()) {
+        <button (click)="logOut()" class="btn">Log Out</button>
+      } @else {
+        <button (click)="logIn()" class="btn">Log In</button>
+      }
     </div>
   </div>`,
   styles: ``,
 })
 export class NavBar {
+  reduxStore = inject(Store);
+  // sub = this.reduxStore.select(selectIsLoggedIn); <-- the old way, returns an observable
+  sub = this.reduxStore.selectSignal(selectIsLoggedIn); // <-- new, sleek, awesome
+
+  logIn() {
+    this.reduxStore.dispatch(IdentityActions.loginRequested());
+  }
+
+  logOut() {
+    this.reduxStore.dispatch(IdentityActions.logoutRequested());
+  }
+
   links = signal([
     { href: ['about'], label: 'About' },
     { href: ['demos'], label: 'Demos' },

@@ -1,8 +1,9 @@
 import { computed } from '@angular/core';
 import { signalStoreFeature, withComputed, withState } from '@ngrx/signals';
 
+export type ApiLoadingStates = 'isLoading' | 'loading' | 'fetching' | 'idle';
 type ApiState = {
-  state: 'isLoading' | 'loading' | 'fetching' | 'idle';
+  state: ApiLoadingStates;
 };
 
 export function withApiState() {
@@ -20,6 +21,10 @@ export function withApiState() {
 
 export function setIsLoading(): ApiState {
   return { state: 'isLoading' };
+}
+
+export function setIsFetching(): ApiState {
+  return { state: 'fetching' };
 }
 
 export function setIsFullfilled(): ApiState {

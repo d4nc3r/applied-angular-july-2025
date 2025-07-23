@@ -10,7 +10,7 @@ import { LinkApiService } from './services/links-api';
   providers: [LinksStore, LinkApiService], // provide to ME and any of my CHILDREN, but is not global
   template: `
     <div class="flex flex-row gap-4">
-      <a class="link" routerLink="/list">List</a>
+      <a class="link" routerLink="/links">List</a>
       <a class="link" routerLink="prefs">prefs</a>
     </div>
 
