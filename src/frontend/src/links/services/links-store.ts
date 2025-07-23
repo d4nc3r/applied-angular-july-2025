@@ -14,32 +14,52 @@ import { computed, inject } from '@angular/core';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, tap } from 'rxjs';
 import {
+  setIsFetching,
   setIsFullfilled,
   setIsLoading,
   withApiState,
 } from './api-state-feature';
+import {
+  clearFilteringTag,
+  setFilterTag,
+  withLinkFiltering,
+} from './link-filter-feature';
+import { Store } from '@ngrx/store';
+import { selectSub } from '../../shared/identity/store';
+import {
+  addIgnoredTag,
+  addWatchedTag,
+  removeIgnoredTag,
+  removeWatchedTag,
+  withTagPrefs,
+} from './tag-prefs-feature';
 
 type SortOptions = 'newest' | 'oldest';
 type LinksState = {
   sortOrder: SortOptions;
-  filterTag: string | null;
 };
 
 export const LinksStore = signalStore(
   withDevtools('links-store'),
   withApiState(),
+  withLinkFiltering(),
+  withTagPrefs(),
   withEntities<ApiLink>(),
   withState<LinksState>({
     sortOrder: 'newest', // this is going to be readonly
-    filterTag: null,
   }),
   withMethods((state) => {
     const service = inject(LinkApiService);
-    // work goes here
+
     return {
-      _load: rxMethod<void>(
+      _load: rxMethod<{ isBackgroundFetch: boolean }>(
         pipe(
-          tap(() => patchState(state, setIsLoading())),
+          tap((p) =>
+            patchState(
+              state,
+              p.isBackgroundFetch ? setIsFetching() : setIsLoading(),
+            ),
+          ),
           exhaustMap(() =>
             service
               .getLinks()
@@ -53,11 +73,22 @@ export const LinksStore = signalStore(
       ),
       changeSortOrder: (sortOrder: SortOptions) =>
         patchState(state, { sortOrder }),
-      setFilterTag: (filterTag: string) => patchState(state, { filterTag }),
-      clearFilterTag: () => patchState(state, { filterTag: null }),
+      setFilterTag: (tag: string) => patchState(state, setFilterTag(tag)),
+      clearFilterTag: () => patchState(state, clearFilteringTag()),
+      addWatchedTag: (tag: string) =>
+        patchState(state, addWatchedTag(state.watchedTags(), tag)),
+      removeWatchedTag: (tag: string) =>
+        patchState(state, removeWatchedTag(state.watchedTags(), tag)),
+      addIgnoredTag: (tag: string) =>
+        patchState(state, addIgnoredTag(state.ignoredTags(), tag)),
+      removeIgnoredTag: (tag: string) =>
+        patchState(state, removeIgnoredTag(state.ignoredTags(), tag)),
     };
   }),
   withComputed((state) => {
+    // injection context
+    const reduxStore = inject(Store);
+    const userSub = reduxStore.selectSignal(selectSub);
     return {
       tags: computed(() => {
         const links = state.entities() || [];
@@ -66,19 +97,26 @@ export const LinksStore = signalStore(
         }, []);
         return Array.from(new Set(allTags));
       }),
+      availableTags: computed(() => {}),
       filteredLinks: computed(() => {
         const tag = state.filterTag();
-        if (tag === null) return state.entities() || [];
-        return (state.entities() || []).filter((link) =>
-          link.tags.includes(tag),
-        );
+        const updatedLinks = state.entities().map((link) => ({
+          ...link,
+          isOwnedByCurrentUser: userSub() === link.owner,
+        }));
+
+        if (tag === null) return updatedLinks;
+        return updatedLinks.filter((link) => link.tags.includes(tag));
       }),
     };
   }),
   withHooks({
     onInit: (store) => {
-      store._load();
+      store._load({ isBackgroundFetch: false });
       console.log('created links store');
+      // setInterval(() => {
+      //   store._load({ isBackgroundFetch: true });
+      // }, 5000);
     },
     onDestroy: () => console.log('destroyed links store'),
   }),

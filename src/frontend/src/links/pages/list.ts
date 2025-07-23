@@ -1,10 +1,11 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { LinksStore } from '../services/links-store';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-links-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
+  imports: [RouterLink],
   template: `
     @if (store.entities()) {
       <form class="filter">
@@ -34,7 +35,15 @@ import { LinksStore } from '../services/links-store';
                 link.url
               }}</a>
             </div>
-            <div></div>
+            <div>
+              @if (link.isOwnedByCurrentUser) {
+                <a
+                  [routerLink]="[link.id, 'edit']"
+                  class="btn btn-sm btn-secondary"
+                  >Edit</a
+                >
+              }
+            </div>
             <div>
               @for (tag of link.tags; track tag) {
                 <button
