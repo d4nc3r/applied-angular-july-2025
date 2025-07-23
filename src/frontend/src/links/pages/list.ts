@@ -1,12 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  resource,
-  signal,
-  computed,
-  inject,
-} from '@angular/core';
-import { ApiLink } from '../types';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { LinksStore } from '../services/links-store';
 
 @Component({
@@ -14,27 +6,27 @@ import { LinksStore } from '../services/links-store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [],
   template: `
-    @if (linksResource.hasValue()) {
+    @if (store.entities()) {
       <form class="filter">
         <input
-          (click)="filterTag.set(null)"
+          (click)="store.clearFilterTag()"
           class="btn btn-square"
           type="reset"
           value="×"
         />
-        @for (tag of tags(); track tag) {
+        @for (tag of store.tags(); track tag) {
           <input
             class="btn"
             type="radio"
             name="filter"
-            [checked]="filterTag() === tag"
+            [checked]="store.filterTag() === tag"
             [attr.aria-label]="tag"
-            (click)="filterTag.set(tag)"
+            (click)="store.setFilterTag(tag)"
           />
         }
       </form>
       <ul class="list rounded-box bg-base-300 p-4">
-        @for (link of filteredLinks(); track link.id) {
+        @for (link of store.filteredLinks(); track link.id) {
           <li class="list-row mb-2">
             <div>
               <p class="text-md font-bold">{{ link.title }}</p>
@@ -46,7 +38,7 @@ import { LinksStore } from '../services/links-store';
             <div>
               @for (tag of link.tags; track tag) {
                 <button
-                  (click)="filterTag.set(tag)"
+                  (click)="store.setFilterTag(tag)"
                   class="badge badge-primary mr-2"
                 >
                   {{ tag }}
@@ -61,31 +53,13 @@ import { LinksStore } from '../services/links-store';
   styles: ``,
 })
 export class List {
-  filterTag = signal<string | null>(null);
-
   store = inject(LinksStore);
 
-  filteredLinks = computed(() => {
-    const tag = this.filterTag();
-    if (tag === null) return this.linksResource.value() || [];
-    return (this.linksResource.value() || []).filter((link) =>
-      link.tags.includes(tag),
-    );
-  });
-
-  tags = computed(() => {
-    const links = this.linksResource.value() || [];
-    const allTags = links.reduce((prev: string[], curr) => {
-      return [...prev, ...curr.tags];
-    }, []);
-    return Array.from(new Set(allTags));
-  });
-
   // resource is only intended for "read" operations, and is still experimental
-  linksResource = resource<ApiLink[], unknown>({
-    loader: () =>
-      fetch('https://links-api.fictionalcompany.com/api/links').then((r) =>
-        r.json(),
-      ),
-  });
+  // linksResource = resource<ApiLink[], unknown>({
+  //   loader: () =>
+  //     fetch('https://links-api.fictionalcompany.com/api/links').then((r) =>
+  //       r.json(),
+  //     ),
+  // });
 }
