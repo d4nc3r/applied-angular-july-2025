@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { IdentityActions } from '../../shared/identity/actions';
 import { selectIsLoggedIn } from '../../shared/identity/store';
+import { selectLinksNavbar } from '../../shared/nav-bar/store';
 
 @Component({
   selector: 'app-nav-bar',
@@ -54,6 +55,11 @@ import { selectIsLoggedIn } from '../../shared/identity/store';
     <div class="navbar-end">
       <!-- only show login button if i'm not logged in -->
       @if (sub()) {
+        @let tags = tagSummary();
+        <span class="alert alert-success"
+          >You are watching {{ tags.watchedTagCount }} tags and ignoring
+          {{ tags.ignoredTagsCount }} tags</span
+        >
         <button (click)="logOut()" class="btn">Log Out</button>
       } @else {
         <button (click)="logIn()" class="btn">Log In</button>
@@ -66,6 +72,7 @@ export class NavBar {
   reduxStore = inject(Store);
   // sub = this.reduxStore.select(selectIsLoggedIn); <-- the old way, returns an observable
   sub = this.reduxStore.selectSignal(selectIsLoggedIn); // <-- new, sleek, awesome
+  tagSummary = this.reduxStore.selectSignal(selectLinksNavbar);
 
   logIn() {
     this.reduxStore.dispatch(IdentityActions.loginRequested());

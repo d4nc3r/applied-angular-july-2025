@@ -26,6 +26,7 @@ import {
 } from './link-filter-feature';
 import { Store } from '@ngrx/store';
 import { selectSub } from '../../shared/identity/store';
+import { withUserPrefs } from './user-prefs-feature';
 
 type SortOptions = 'newest' | 'oldest';
 type LinksState = {
@@ -36,6 +37,7 @@ export const LinksStore = signalStore(
   withDevtools('links-store'),
   withApiState(),
   withLinkFiltering(),
+  withUserPrefs(),
   withEntities<ApiLink>(),
   withState<LinksState>({
     sortOrder: 'newest', // this is going to be readonly
@@ -81,7 +83,6 @@ export const LinksStore = signalStore(
         }, []);
         return Array.from(new Set(allTags));
       }),
-      availableTags: computed(() => {}),
       filteredLinks: computed(() => {
         const tag = state.filterTag();
         const updatedLinks = state.entities().map((link) => ({

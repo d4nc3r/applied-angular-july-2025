@@ -14,6 +14,7 @@ import { routes } from './app.routes';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { identityFeature } from '../shared/identity/store';
 import { IdentityEffects } from '../shared/identity/effects';
+import { navBarFeature } from '../shared/nav-bar/store';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -29,5 +30,6 @@ export const appConfig: ApplicationConfig = {
     provideStoreDevtools(),
     provideEffects([IdentityEffects]),
     provideState(identityFeature),
+    provideState(navBarFeature),
   ],
 };
