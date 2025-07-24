@@ -26,13 +26,6 @@ import {
 } from './link-filter-feature';
 import { Store } from '@ngrx/store';
 import { selectSub } from '../../shared/identity/store';
-import {
-  addIgnoredTag,
-  addWatchedTag,
-  removeIgnoredTag,
-  removeWatchedTag,
-  withTagPrefs,
-} from './tag-prefs-feature';
 
 type SortOptions = 'newest' | 'oldest';
 type LinksState = {
@@ -43,7 +36,6 @@ export const LinksStore = signalStore(
   withDevtools('links-store'),
   withApiState(),
   withLinkFiltering(),
-  withTagPrefs(),
   withEntities<ApiLink>(),
   withState<LinksState>({
     sortOrder: 'newest', // this is going to be readonly
@@ -75,14 +67,6 @@ export const LinksStore = signalStore(
         patchState(state, { sortOrder }),
       setFilterTag: (tag: string) => patchState(state, setFilterTag(tag)),
       clearFilterTag: () => patchState(state, clearFilteringTag()),
-      addWatchedTag: (tag: string) =>
-        patchState(state, addWatchedTag(state.watchedTags(), tag)),
-      removeWatchedTag: (tag: string) =>
-        patchState(state, removeWatchedTag(state.watchedTags(), tag)),
-      addIgnoredTag: (tag: string) =>
-        patchState(state, addIgnoredTag(state.ignoredTags(), tag)),
-      removeIgnoredTag: (tag: string) =>
-        patchState(state, removeIgnoredTag(state.ignoredTags(), tag)),
     };
   }),
   withComputed((state) => {
